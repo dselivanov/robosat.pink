@@ -1,20 +1,11 @@
 import sys
-
 import osmium
 import geojson
 import shapely.geometry
 
 
 class BuildingHandler(osmium.SimpleHandler):
-    """Extracts building polygon features (visible in satellite imagery) from the map."""
-
-    # building=* to discard because these features are not vislible in satellite imagery
-    building_filter = set(
-        ["construction", "houseboat", "static_caravan", "stadium", "conservatory", "digester", "greenhouse", "ruins"]
-    )
-
-    # location=* to discard because these features are not vislible in satellite imagery
-    location_filter = set(["underground", "underwater"])
+    """Extracts building polygon features"""
 
     def __init__(self):
         super().__init__()
@@ -24,13 +15,13 @@ class BuildingHandler(osmium.SimpleHandler):
         if not w.is_closed() or len(w.nodes) < 4:
             return
 
-        if "building" not in w.tags:
+        if not list(set(["building", "landuse", "construction"]) & set([k for k in dict(w.tags).keys()])):
             return
 
-        if w.tags["building"] in self.building_filter:
+        if "building" in w.tags and w.tags["building"] in set(["houseboat", "static_caravan", "stadium", "digester", "ruins"]):
             return
 
-        if "location" in w.tags and w.tags["location"] in self.location_filter:
+        if "location" in w.tags and w.tags["location"] in set(["underground", "underwater"]):
             return
 
         geometry = geojson.Polygon([[(n.lon, n.lat) for n in w.nodes]])
