@@ -15,7 +15,7 @@ class BuildingHandler(osmium.SimpleHandler):
         if not w.is_closed() or len(w.nodes) < 4:
             return
 
-        if not list(set(["building", "landuse", "construction"]) & set([k for k in dict(w.tags).keys()])):
+        if not list(set(["building", "construction"]) & set([k for k in dict(w.tags).keys()])):
             return
 
         if "building" in w.tags and w.tags["building"] in set(["houseboat", "static_caravan", "stadium", "digester", "ruins"]):
