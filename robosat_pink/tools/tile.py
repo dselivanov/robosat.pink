@@ -39,6 +39,7 @@ def add_parser(subparser, formatter_class):
     out.add_argument("--nodata", type=int, default=0, choices=range(0, 256), metavar="[0-255]", help=help)
     help = "Skip tile if nodata pixel ratio > threshold. [default: 100]"
     out.add_argument("--nodata_threshold", type=int, default=100, choices=range(0, 101), metavar="[0-100]", help=help)
+    out.add_argument("--keep_borders", action="store_true", help="keep tiles even if borders are empty (nodata)")
     out.add_argument("out", type=str, help="output directory path [required]")
 
     lab = parser.add_argument_group("Labels")
@@ -56,15 +57,15 @@ def add_parser(subparser, formatter_class):
     parser.set_defaults(func=main)
 
 
-def is_nodata(image, nodata, threshold):
-
-    if (
-        np.all(image[0, :, :] == nodata)
-        or np.all(image[-1, :, :] == nodata)
-        or np.all(image[:, 0, :] == nodata)
-        or np.all(image[:, -1, :] == nodata)
-    ):
-        return True  # pixel border is nodata, on all bands
+def is_nodata(image, nodata, threshold, keep_borders = False):
+    if (not keep_borders):
+        if (
+            np.all(image[0, :, :] == nodata)
+            or np.all(image[-1, :, :] == nodata)
+            or np.all(image[:, 0, :] == nodata)
+            or np.all(image[:, -1, :] == nodata)
+        ):
+            return True  # pixel border is nodata, on all bands
 
     C, W, H = image.shape
     return np.sum(image[:, :, :] == nodata) >= W * H * (threshold / 100)
@@ -153,7 +154,7 @@ def main(args):
                 image = np.moveaxis(data, 0, 2)  # C,H,W -> H,W,C
 
                 tile_key = (str(tile.x), str(tile.y), str(tile.z))
-                if not args.label and len(tiles_map[tile_key]) == 1 and is_nodata(image, args.nodata, args.nodata_threshold):
+                if not args.label and len(tiles_map[tile_key]) == 1 and is_nodata(image, args.nodata, args.nodata_threshold, args.keep_borders):
                     progress.update()
                     continue
 
@@ -205,7 +206,7 @@ def main(args):
                 assert image.shape == split.shape
                 image[np.where(image == 0)] += split[np.where(image == 0)]
 
-            if not args.label and is_nodata(image, args.nodata, args.nodata_threshold):
+            if not args.label and is_nodata(image, args.nodata, args.nodata_threshold, args.keep_borders):
                 progress.update()
                 return
 
