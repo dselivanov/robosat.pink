@@ -18,7 +18,9 @@ class BuildingHandler(osmium.SimpleHandler):
         if not list(set(["building", "construction"]) & set([k for k in dict(w.tags).keys()])):
             return
 
-        if "building" in w.tags and w.tags["building"] in set(["houseboat", "static_caravan", "stadium", "digester", "ruins"]):
+        if "building" in w.tags and w.tags["building"] in set(
+            ["houseboat", "static_caravan", "stadium", "digester", "ruins"]
+        ):
             return
 
         if "location" in w.tags and w.tags["location"] in set(["underground", "underwater"]):
