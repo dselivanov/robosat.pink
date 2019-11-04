@@ -57,8 +57,8 @@ def add_parser(subparser, formatter_class):
     parser.set_defaults(func=main)
 
 
-def is_nodata(image, nodata, threshold, keep_borders = False):
-    if (not keep_borders):
+def is_nodata(image, nodata, threshold, keep_borders=False):
+    if not keep_borders:
         if (
             np.all(image[0, :, :] == nodata)
             or np.all(image[-1, :, :] == nodata)
@@ -154,7 +154,11 @@ def main(args):
                 image = np.moveaxis(data, 0, 2)  # C,H,W -> H,W,C
 
                 tile_key = (str(tile.x), str(tile.y), str(tile.z))
-                if not args.label and len(tiles_map[tile_key]) == 1 and is_nodata(image, args.nodata, args.nodata_threshold, args.keep_borders):
+                if (
+                    not args.label
+                    and len(tiles_map[tile_key]) == 1
+                    and is_nodata(image, args.nodata, args.nodata_threshold, args.keep_borders)
+                ):
                     progress.update()
                     continue
 

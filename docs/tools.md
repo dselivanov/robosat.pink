@@ -196,7 +196,7 @@ Inputs [either --postgis or --geojson is required]:
 Outputs:
  out                                output directory path [required]
  --append                           Append to existing tile if any, useful to multiclass labels
- --ts TS                            output tile size [default: 512]
+ --ts TS                            output tile size [default: 512,512]
 
 Web UI:
  --web_ui_base_url WEB_UI_BASE_URL  alternate Web UI base URL
@@ -232,8 +232,9 @@ Web UI:
 ## rsp tile
 ```
 usage: rsp tile [-h] [--cover COVER] --zoom ZOOM [--ts TS] [--nodata [0-255]]
-                [--nodata_threshold [0-100]] [--label] [--config CONFIG]
-                [--workers WORKERS] [--web_ui_base_url WEB_UI_BASE_URL]
+                [--nodata_threshold [0-100]] [--keep_borders] [--label]
+                [--config CONFIG] [--workers WORKERS]
+                [--web_ui_base_url WEB_UI_BASE_URL]
                 [--web_ui_template WEB_UI_TEMPLATE] [--no_web_ui]
                 rasters [rasters ...] out
 
@@ -246,9 +247,10 @@ Inputs:
 
 Output:
  --zoom ZOOM                        zoom level of tiles [required]
- --ts TS                            tile size in pixels [default: 512]
+ --ts TS                            tile size in pixels [default: 512,512]
  --nodata [0-255]                   nodata pixel value, used by default to remove coverage border's tile [default: 0]
  --nodata_threshold [0-100]         Skip tile if nodata pixel ratio > threshold. [default: 100]
+ --keep_borders                     keep tiles even if borders are empty (nodata)
  out                                output directory path [required]
 
 Labels:
