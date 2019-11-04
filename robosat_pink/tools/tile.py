@@ -130,7 +130,6 @@ def main(args):
 
             raster = rasterio_open(path)
             w, s, e, n = transform_bounds(raster.crs, "EPSG:4326", *raster.bounds)
-            transform, _, _ = calculate_default_transform(raster.crs, "EPSG:3857", raster.width, raster.height, w, s, e, n)
             tiles = [mercantile.Tile(x=x, y=y, z=z) for x, y, z in mercantile.tiles(w, s, e, n, args.zoom)]
             tiled = []
 
