@@ -68,7 +68,7 @@ def is_nodata(image, nodata, threshold, keep_borders=False):
             return True  # pixel border is nodata, on all bands
 
     C, W, H = image.shape
-    return np.sum(image[:, :, :] == nodata) >= W * H * (threshold / 100)
+    return np.sum(image[:, :, :] == nodata) >= C * W * H * (threshold / 100)
 
 
 def main(args):
