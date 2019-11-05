@@ -11,7 +11,7 @@ import mercantile
 from rasterio import open as rasterio_open
 from rasterio.vrt import WarpedVRT
 from rasterio.enums import Resampling
-from rasterio.warp import transform_bounds, calculate_default_transform
+from rasterio.warp import transform_bounds
 from rasterio.transform import from_bounds
 
 from robosat_pink.core import load_config, check_classes, make_palette, web_ui
@@ -169,11 +169,9 @@ def main(args):
                 x, y, z = map(int, tile)
 
                 if not args.label:
-                    ret = tile_image_to_file(out, mercantile.Tile(x=x, y=y, z=z), image)
+                    tile_image_to_file(out, mercantile.Tile(x=x, y=y, z=z), image)
                 if args.label:
-                    ret = tile_label_to_file(out, mercantile.Tile(x=x, y=y, z=z), palette, image)
-
-                assert ret, "Unable to write tile {} from raster {}.".format(str(tile), raster)
+                    tile_label_to_file(out, mercantile.Tile(x=x, y=y, z=z), palette, image)
 
                 if len(tiles_map[tile_key]) == 1:
                     progress.update()
@@ -216,12 +214,10 @@ def main(args):
             tile = mercantile.Tile(x=x, y=y, z=z)
 
             if not args.label:
-                ret = tile_image_to_file(args.out, tile, image)
+                tile_image_to_file(args.out, tile, image)
 
             if args.label:
-                ret = tile_label_to_file(args.out, tile, palette, image)
-
-            assert ret, "Unable to write tile {} from raster {}.".format(str(tile_key))
+                tile_label_to_file(args.out, tile, palette, image)
 
             progress.update()
             return tile

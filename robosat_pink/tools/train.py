@@ -98,10 +98,10 @@ def main(args):
 
     loader = load_module("robosat_pink.loaders.{}".format(config["model"]["loader"].lower()))
     loader_train = getattr(loader, config["model"]["loader"])(
-        config, config["model"]["ts"], os.path.join(args.dataset, "training"), "train"
+        config, config["model"]["ts"], os.path.join(args.dataset, "training"), None, "train"
     )
     loader_val = getattr(loader, config["model"]["loader"])(
-        config, config["model"]["ts"], os.path.join(args.dataset, "validation"), "train"
+        config, config["model"]["ts"], os.path.join(args.dataset, "validation"), None, "train"
     )
 
     model_module = load_module("robosat_pink.models.{}".format(config["model"]["nn"].lower()))
