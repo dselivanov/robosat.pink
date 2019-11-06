@@ -140,10 +140,15 @@ def tiles_to_geojson(tiles, union=True):
 
 def tile_image_from_file(path, bands=None):
     """Return a multiband image numpy array, from an image file path"""
-
+    path_expanded = os.path.expanduser(path)
+    _, file_extension = os.path.splitext(path_expanded)
     try:
-        raster = rasterio_open(os.path.expanduser(path))
+        if file_extension in set([".png", ".webp", ".jpeg", ".jpg"]):
+            return np.array(Image.open(path_expanded).convert("RGB"))
+
+        raster = rasterio_open(path_expanded)
         assert raster, "Unable to open {}".format(path)
+
     except:
         return None
 
