@@ -127,8 +127,8 @@ def main(args):
     criterion = getattr(loss_module, config["model"]["loss"])().to(device)
 
     bs = config["model"]["bs"]
-    train_loader = DataLoader(loader_train, batch_size=bs, shuffle=True, drop_last=True, num_workers=args.workers)
-    val_loader = DataLoader(loader_val, batch_size=bs, shuffle=False, drop_last=True, num_workers=args.workers)
+    train_loader = DataLoader(loader_train, batch_size=bs, shuffle=True, drop_last=True, num_workers=args.workers, pin_memory=True)
+    val_loader = DataLoader(loader_val, batch_size=bs, shuffle=False, drop_last=True, num_workers=args.workers, pin_memory=True)
 
     if args.no_training:
         process(val_loader, config, log, device, nn, criterion, "eval")
