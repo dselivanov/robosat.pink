@@ -5,7 +5,7 @@ import cv2
 import torch
 import numpy as np
 from importlib import import_module
-
+cv2.setNumThreads(1)
 
 def to_normalized_tensor(config, ts, mode, image, mask=None):
 
