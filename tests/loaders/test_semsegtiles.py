@@ -16,11 +16,11 @@ class TestSemSegTiles(unittest.TestCase):
         }
 
         # mode train
-        dataset = SemSegTiles(config, (512, 512), path, "train")
+        dataset = SemSegTiles(config, (512, 512), path, None, mode="train")
         self.assertEqual(len(dataset), 3)
 
         # mode predict
-        dataset = SemSegTiles(config, (512, 512), path, "predict")
+        dataset = SemSegTiles(config, (512, 512), path, None, mode="predict")
         self.assertEqual(len(dataset), 3)
 
     def test_getitem(self):
@@ -32,14 +32,14 @@ class TestSemSegTiles(unittest.TestCase):
         }
 
         # mode train
-        dataset = SemSegTiles(config, (512, 512), path, "train")
+        dataset = SemSegTiles(config, (512, 512), path, None, mode="train")
         image, mask, tile = dataset[0]
 
         assert tile == mercantile.Tile(69105, 105093, 18)
         self.assertEqual(image.shape, torch.Size([3, 512, 512]))
 
         # mode predict
-        dataset = SemSegTiles(config, (512, 512), path, "predict")
+        dataset = SemSegTiles(config, (512, 512), path, None, mode="predict")
         images, tiles = dataset[0]
 
         self.assertEqual(type(images), torch.Tensor)

@@ -9,7 +9,7 @@ import torch.backends.cudnn
 from torch.utils.data import DataLoader
 
 from robosat_pink.core import load_config, load_module, check_classes, check_channels, make_palette, web_ui, Logs
-from robosat_pink.tiles import tiles_from_dir, tile_label_to_file
+from robosat_pink.tiles import tile_label_to_file, tile_translate_to_file, tiles_from_csv
 
 
 def add_parser(subparser, formatter_class):
@@ -21,13 +21,15 @@ def add_parser(subparser, formatter_class):
     inp.add_argument("dataset", type=str, help="predict dataset directory path [required]")
     inp.add_argument("--checkpoint", type=str, required=True, help="path to the trained model to use [required]")
     inp.add_argument("--config", type=str, help="path to config file [required]")
+    inp.add_argument("--cover", type=str, help="path to csv tiles cover file, to filter tiles to predict [optional]")
 
     out = parser.add_argument_group("Outputs")
     out.add_argument("out", type=str, help="output directory path [required]")
 
-    perf = parser.add_argument_group("Data Loaders")
-    perf.add_argument("--workers", type=int, help="number of workers to load images [default: GPU x 2]")
-    perf.add_argument("--bs", type=int, default=4, help="batch size value for data loader [default: 4]")
+    dl = parser.add_argument_group("Data Loaders")
+    dl.add_argument("--translate", action="store_true", help="translate tiles coverage to avoid borders effect")
+    dl.add_argument("--workers", type=int, help="number of workers to load images [default: GPU x 2]")
+    dl.add_argument("--bs", type=int, default=4, help="batch size value for data loader [default: 4]")
 
     ui = parser.add_argument_group("Web UI")
     ui.add_argument("--web_ui_base_url", type=str, help="alternate Web UI base URL")
@@ -43,6 +45,7 @@ def main(args):
     check_classes(config)
     palette = make_palette([classe["color"] for classe in config["classes"]])
     args.workers = torch.cuda.device_count() * 2 if torch.device("cuda") and not args.workers else args.workers
+    cover = [tile for tile in tiles_from_csv(os.path.expanduser(args.cover))] if args.cover else None
 
     log = Logs(os.path.join(args.out, "log"))
 
@@ -54,6 +57,11 @@ def main(args):
         torch.backends.cudnn.benchmark = True
     else:
         log.log("RoboSat.pink - predict on CPU, with {} workers".format(args.workers))
+        log.log("")
+        log.log("============================================================")
+        log.log("WARNING: Are you -really- sure about not predicting on GPU ?")
+        log.log("============================================================")
+        log.log("")
         device = torch.device("cpu")
 
     chkpt = torch.load(args.checkpoint, map_location=device)
@@ -65,12 +73,14 @@ def main(args):
 
     log.log("Model {} - UUID: {}".format(chkpt["nn"], chkpt["uuid"]))
 
+    mode = "predict" if not args.translate else "predict_translate"
     loader_module = load_module("robosat_pink.loaders.{}".format(chkpt["loader"].lower()))
-    loader_predict = getattr(loader_module, chkpt["loader"])(config, chkpt["shape_in"][1:3], args.dataset, mode="predict")
+    loader_predict = getattr(loader_module, chkpt["loader"])(config, chkpt["shape_in"][1:3], args.dataset, cover, mode=mode)
 
     loader = DataLoader(loader_predict, batch_size=args.bs, num_workers=args.workers)
     assert len(loader), "Empty predict dataset directory. Check your path."
 
+    tiled = []
     with torch.no_grad():  # don't track tensors with autograd during prediction
 
         for images, tiles in tqdm(loader, desc="Eval", unit="batch", ascii=True):
@@ -83,10 +93,13 @@ def main(args):
             for tile, prob in zip(tiles, probs):
                 x, y, z = list(map(int, tile))
                 mask = np.around(prob[1:, :, :]).astype(np.uint8).squeeze()
-                tile_label_to_file(args.out, mercantile.Tile(x, y, z), palette, mask)
+                if args.translate:
+                    tile_translate_to_file(args.out, mercantile.Tile(x, y, z), palette, mask)
+                else:
+                    tile_label_to_file(args.out, mercantile.Tile(x, y, z), palette, mask)
+                tiled.append(mercantile.Tile(x, y, z))
 
-    if not args.no_web_ui:
+    if not args.no_web_ui and not args.translate:
         template = "leaflet.html" if not args.web_ui_template else args.web_ui_template
         base_url = args.web_ui_base_url if args.web_ui_base_url else "."
-        tiles = [tile for tile in tiles_from_dir(args.out)]
-        web_ui(args.out, base_url, tiles, tiles, "png", template)
+        web_ui(args.out, base_url, tiled, tiled, "png", template)
